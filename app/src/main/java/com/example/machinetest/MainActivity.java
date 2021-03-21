@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -32,30 +34,28 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "*";
     String API_URL = "http://staging.qnopy.com:8080/webanguler/images/formDetails.json";
 
-    LinearLayout layout;
-
+    Gson gson;
+    RequestQueue requestQueue;
+    LinearLayout viewContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main);
+
         init();
-
-        setContentView(layout);
-
         ParseJson();
     }
 
     private void init() {
-        layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
+        viewContainer = findViewById(R.id.viewContainer);
 
     }
 
     private void ParseJson() {
 
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue = Volley.newRequestQueue(this);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
                 API_URL,
@@ -71,12 +71,14 @@ public class MainActivity extends AppCompatActivity {
     private class Listner implements Response.Listener<JSONObject> {
         @Override
         public void onResponse(JSONObject response) {
-            Gson gson = new Gson();
+            gson = new Gson();
             ApiResponse apiResponse =   (ApiResponse)
                                         gson.fromJson(response.toString(),
                                         ApiResponse.class);
 
             List<FormData> formDataList = apiResponse.getFormData();
+
+            formDataList = SortDataByRowOrder(formDataList);
 
             for (FormData data : formDataList) {
                 try {
@@ -87,15 +89,29 @@ public class MainActivity extends AppCompatActivity {
                 insertView(data);
             }
 
-            for (FormData data : RoomDb.getInstance(MainActivity.this).roomDao().getFormData()) {
-                logg("-----------------");
-                logg(data.getFieldParameterLabel());
-            }
-
-        logg("Done");
-
         }
     }
+
+    private List<FormData> SortDataByRowOrder(List<FormData> formDataList) {
+        int n = formDataList.size();
+        for(int itr = 0; itr< n-1; itr++){
+            for (int j = 0; j < n-itr-1; j++)
+
+                if (formDataList.get(j).getRowOrder() > formDataList.get(j+1).getRowOrder())
+                {
+                    FormData temp = formDataList.get(j);
+                    formDataList.set(j, formDataList.get(j+1));
+                    formDataList.set(j+1, temp);
+                }
+        }
+
+        return formDataList;
+//        for (FormData data : formDataList) {
+//            System.out.println(data.getRowOrder()+" : "+data.getFieldInputType());
+//        }
+
+    }
+
 
     private class ErrorListner implements Response.ErrorListener {
         @Override
@@ -104,78 +120,71 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void toast(String msg) {
-        Toast.makeText(getApplicationContext(),
-                msg,
-                Toast.LENGTH_SHORT)
-                .show();
-    }
-
     public void logg(String msg) {
         Log.e(TAG, "logg: " + msg);
     }
 
     private void insertView(FormData formData){
-        logg(formData.getFieldInputType());
-        LinearLayout itemLayout = new LinearLayout(this);
-        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+        logg("DataTypes: "+formData.getFieldInputType());
 
-        TextView textView = new TextView(this);
-        EditText editText = new EditText(this);
+//        LinearLayout itemLayout = new LinearLayout(this);
+//        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+//        TextView textView = new TextView(this);
+//        EditText editText = new EditText(this);
 
+        View itemLinearLayout = (LinearLayout)LayoutInflater.from(this).inflate(R.layout.list_item, null);
+        TextView tv = itemLinearLayout.findViewById(R.id.text);
+        EditText edt = itemLinearLayout.findViewById(R.id.edt);
 
         switch (formData.getFieldInputType()){
             case "TEXT":
-                textView.setText(formData.getFieldParameterLabel());
-                editText.setText(formData.getStringValue());
-                editText.setInputType(InputType.TYPE_CLASS_TEXT);
-                itemLayout.addView(textView);
-                itemLayout.addView(editText);
+                tv.setText(formData.getFieldParameterLabel());
+                edt.setText(formData.getStringValue());
+                edt.setInputType(InputType.TYPE_CLASS_TEXT);
                 break;
 
             case "NUMERIC":
-                textView.setText(formData.getFieldParameterLabel());
-                editText.setText(formData.getStringValue());
-                editText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                itemLayout.addView(textView);
-                itemLayout.addView(editText);
+                tv.setText(formData.getFieldParameterLabel());
+                edt.setText(formData.getStringValue());
+                edt.setInputType(InputType.TYPE_CLASS_NUMBER);
                 break;
 
             case "TIME":
-                textView.setText(formData.getFieldParameterLabel());
-                editText.setText(formData.getStringValue());
-                editText.setInputType(InputType.TYPE_CLASS_DATETIME);
-                itemLayout.addView(textView);
-                itemLayout.addView(editText);
+                tv.setText(formData.getFieldParameterLabel());
+                edt.setText(formData.getStringValue());
+                edt.setInputType(InputType.TYPE_CLASS_DATETIME);
+
                 break;
 
             case "DATE":
-                textView.setText(formData.getFieldParameterLabel());
-                editText.setText(formData.getStringValue());
-                editText.setInputType(InputType.TYPE_CLASS_DATETIME);
-                itemLayout.addView(textView);
-                itemLayout.addView(editText);
+                tv.setText(formData.getFieldParameterLabel());
+                edt.setText(formData.getStringValue());
+                edt.setInputType(InputType.TYPE_CLASS_DATETIME);
+
                 break;
 
             case "PHOTOS":
-                textView.setText(formData.getFieldParameterLabel());
-                editText.setText(formData.getStringValue());
-                editText.setInputType(InputType.TYPE_CLASS_DATETIME);
-                itemLayout.addView(textView);
-                itemLayout.addView(editText);
+                tv.setText(formData.getFieldParameterLabel());
+                edt.setText(formData.getStringValue());
+                edt.setInputType(InputType.TYPE_CLASS_DATETIME);
+
                 break;
 
             case "GPS":
-                textView.setText(formData.getFieldParameterLabel());
-                editText.setText(formData.getStringValue());
-                editText.setInputType(InputType.TYPE_CLASS_DATETIME);
-                itemLayout.addView(textView);
-                itemLayout.addView(editText);
+                tv.setText(formData.getFieldParameterLabel());
+                edt.setText(formData.getStringValue());
+                edt.setInputType(InputType.TYPE_CLASS_DATETIME);
+
                 break;
 
         }
 
-        layout.addView(itemLayout);
+        viewContainer.addView(itemLinearLayout);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //requestQueue.stop();
+    }
 }

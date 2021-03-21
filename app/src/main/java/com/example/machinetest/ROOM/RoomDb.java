@@ -11,7 +11,6 @@ import androidx.room.RoomDatabase;
 @Database(entities = {FormData.class}, version = 1, exportSchema = true)
 public abstract class RoomDb extends RoomDatabase {
 
-
     private static RoomDb db = null;
 
     public static RoomDb getInstance(Context context){
