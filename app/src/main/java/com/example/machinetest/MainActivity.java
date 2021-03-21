@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private void init() {
         viewContainer = findViewById(R.id.viewContainer);
 
+
     }
 
     private void ParseJson() {
